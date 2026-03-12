@@ -14,7 +14,7 @@ export default function AdminLoginPage() {
     setError('');
     try {
       const res = await api.post('/auth/login', form);
-      localStorage.setItem('admin_token', res.data.token);
+      // Token is now set via httpOnly cookie
       localStorage.setItem('admin_username', res.data.username);
       navigate('/admin');
     } catch (err) {

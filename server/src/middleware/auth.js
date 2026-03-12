@@ -4,11 +4,19 @@ const db = require('../config/database');
 
 function requireAdmin(req, res, next) {
   const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
+  let token = null;
+
+  if (authHeader?.startsWith('Bearer ')) {
+    token = authHeader.slice(7);
+  } else if (req.cookies?.admin_token) {
+    token = req.cookies.admin_token;
+  }
+
+  if (!token) {
     return res.status(401).json({ error: 'Missing authorization token' });
   }
+
   try {
-    const token = authHeader.slice(7);
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     req.admin = payload;
     next();

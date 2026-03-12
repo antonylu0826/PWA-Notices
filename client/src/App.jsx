@@ -12,8 +12,8 @@ function UserRoute({ children }) {
 }
 
 function AdminRoute({ children }) {
-  const token = localStorage.getItem('admin_token');
-  return token ? children : <Navigate to="/admin/login" replace />;
+  const username = localStorage.getItem('admin_username');
+  return username ? children : <Navigate to="/admin/login" replace />;
 }
 
 export default function App() {
