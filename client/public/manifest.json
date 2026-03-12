@@ -1,0 +1,13 @@
+{
+  "name": "Notices",
+  "short_name": "通知中心",
+  "description": "即時推播通知系統",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

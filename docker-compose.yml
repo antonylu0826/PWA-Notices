@@ -1,0 +1,49 @@
+services:
+  server:
+    build:
+      context: ./server
+    restart: unless-stopped
+    env_file: ./server/.env
+    environment:
+      - NODE_ENV=production
+      - CORS_ORIGIN=*        # server not exposed externally; nginx proxies all API calls
+    volumes:
+      - server_data:/app/data
+    networks:
+      - internal
+    # No ports binding — only reachable from within Docker network
+
+  client:
+    build:
+      context: ./client
+    restart: unless-stopped
+    networks:
+      - internal
+    depends_on:
+      - server
+    # No host port needed — zrok connects directly via Docker network
+
+  zrok:
+    build:
+      context: ./zrok
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    user: root
+    environment:
+      - HOME=/zrok
+      - ZROK_ENABLE_TOKEN=${ZROK_ENABLE_TOKEN}
+    volumes:
+      - zrok_env:/zrok/.zrok
+    networks:
+      - internal
+    depends_on:
+      - client
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  server_data:
+  zrok_env:
