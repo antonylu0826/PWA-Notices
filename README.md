@@ -1,4 +1,4 @@
-# MobileNotice
+# PWA Notices
 
 A self-hosted PWA push notification platform. External systems (PLCs, servers, scripts) send HTTP requests to trigger notification flows, which deliver real-time FCM push notifications to registered mobile/desktop users.
 
