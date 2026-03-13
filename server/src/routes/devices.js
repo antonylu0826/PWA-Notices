@@ -29,7 +29,7 @@ router.post('/', (req, res) => {
 router.get('/', requireAdmin, (req, res) => {
   const devices = db
     .prepare(
-      'SELECT id, username, platform, is_active, last_active, created_at FROM devices ORDER BY last_active DESC'
+      "SELECT id, username, platform, is_active, strftime('%Y-%m-%dT%H:%M:%SZ', last_active) as last_active, strftime('%Y-%m-%dT%H:%M:%SZ', created_at) as created_at FROM devices ORDER BY last_active DESC"
     )
     .all();
   res.json(devices);
@@ -37,7 +37,10 @@ router.get('/', requireAdmin, (req, res) => {
 
 // Delete device (admin)
 router.delete('/:id', requireAdmin, (req, res) => {
-  db.prepare('DELETE FROM devices WHERE id = ?').run(req.params.id);
+  const deviceId = req.params.id;
+  // Manual cleanup for extra safety (in case CASCADE is not yet applied to existing DB)
+  db.prepare('DELETE FROM notice_acks WHERE device_id = ?').run(deviceId);
+  db.prepare('DELETE FROM devices WHERE id = ?').run(deviceId);
   res.json({ success: true });
 });
 

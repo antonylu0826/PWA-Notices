@@ -12,22 +12,9 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-messaging.onBackgroundMessage((payload) => {
-  const { title, body } = payload.notification || {};
-  const severity = payload.data?.severity || 'info';
-
-  const severityEmoji =
-    severity === 'critical' ? '🔴' : severity === 'warning' ? '🟡' : '🔵';
-
-  self.registration.showNotification(`${severityEmoji} ${title}`, {
-    body,
-    icon: '/icon.svg',
-    badge: '/icon.svg',
-    tag: payload.data?.flowKey || 'notice',
-    data: payload.data,
-    requireInteraction: severity === 'critical',
-  });
-});
+// Solution E: No background message listener. 
+// We rely entirely on the system-level 'notification' payload.
+// This prevents duplicated notifications on iOS.
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();

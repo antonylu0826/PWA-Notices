@@ -2,9 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
+import { QRCodeSVG } from 'qrcode.react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
 // --- Sub-components ---
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return '—';
+  
+  // SQLite's CURRENT_TIMESTAMP returns "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD HH:MM:SS.SSS"
+  // We MUST convert this to a format the browser recognizes as UTC (ISO 8601).
+  let isoStr = dateStr;
+  if (typeof isoStr === 'string' && !isoStr.includes('Z') && !isoStr.includes('+')) {
+    // 1. Replace space with 'T'
+    // 2. Ensure it ends with 'Z' to indicate UTC
+    isoStr = isoStr.trim().replace(' ', 'T') + 'Z';
+  }
+
+  try {
+    const date = new Date(isoStr);
+    // Check if valid date
+    if (isNaN(date.getTime())) return dateStr;
+
+    // Use a fixed format that we know works across browsers
+    const pad = (n) => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  } catch (e) {
+    console.error('[TimeFix] Parse error:', e, dateStr);
+    return dateStr;
+  }
+};
 
 function StatsPanel({ stats }) {
   const { t } = useTranslation();
@@ -21,6 +47,32 @@ function StatsPanel({ stats }) {
       <div className="stat-card">
         <span className="stat-value">{stats.pending_acks}</span>
         <span className="stat-label">{t('admin.stats.pending_acks')}</span>
+      </div>
+    </div>
+  );
+}
+
+function QRCodeCard() {
+  const { t } = useTranslation();
+  const url = window.location.origin;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(url);
+    alert(t('admin.qrcode.copy_success'));
+  };
+
+  return (
+    <div className="panel qrcode-panel" style={{ textAlign: 'center', maxWidth: '500px', margin: '0 auto' }}>
+      <h2>{t('admin.qrcode.title')}</h2>
+      <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', display: 'inline-block', marginBottom: '20px', marginTop: '10px' }}>
+        <QRCodeSVG value={url} size={240} />
+      </div>
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
+        {t('admin.qrcode.hint')}
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+        <code style={{ background: 'rgba(255,255,255,0.1)', padding: '8px 16px', borderRadius: '6px', fontSize: '1rem', width: '100%', wordBreak: 'break-all' }}>{url}</code>
+        <button className="btn-primary" style={{ width: 'auto', minWidth: '160px' }} onClick={handleCopy}>{t('admin.qrcode.btn_copy')}</button>
       </div>
     </div>
   );
@@ -120,19 +172,19 @@ function SendPanel() {
         <div className="form-group">
           <label>{t('admin.send.label_target')}</label>
           <div className="radio-group" style={{ marginBottom: '8px' }}>
-            {['all', 'users'].map((t) => (
+            {['all', 'users'].map((type) => (
               <label
-                key={t}
-                className={`radio-label ${targetType === t ? 'active' : ''}`}
+                key={type}
+                className={`radio-label ${targetType === type ? 'active' : ''}`}
               >
                 <input
                   type="radio"
                   name="targetType"
-                  value={t}
-                  checked={targetType === t}
-                  onChange={() => { setTargetType(t); setTargetUsers([]); }}
+                  value={type}
+                  checked={targetType === type}
+                  onChange={() => { setTargetType(type); setTargetUsers([]); }}
                 />
-                {t === 'all' ? t('admin.send.target_all') : t('admin.send.target_users')}
+                {type === 'all' ? t('admin.send.target_all') : t('admin.send.target_users')}
               </label>
             ))}
           </div>
@@ -367,19 +419,19 @@ function FlowsPanel() {
             <div className="form-group">
               <label>{t('admin.flows.label_recipients')}</label>
               <div className="radio-group" style={{ marginBottom: '8px' }}>
-                {['all', 'users'].map((t) => (
+                {['all', 'users'].map((type) => (
                   <label
-                    key={t}
-                    className={`radio-label ${form.recipientType === t ? 'active' : ''}`}
+                    key={type}
+                    className={`radio-label ${form.recipientType === type ? 'active' : ''}`}
                   >
                     <input
                       type="radio"
                       name="recipientType"
-                      value={t}
-                      checked={form.recipientType === t}
-                      onChange={() => setForm({ ...form, recipientType: t, recipientUsers: [] })}
+                      value={type}
+                      checked={form.recipientType === type}
+                      onChange={() => setForm({ ...form, recipientType: type, recipientUsers: [] })}
                     />
-                    {t === 'all' ? '所有人' : '指定用戶'}
+                    {type === 'all' ? t('admin.send.target_all') : t('admin.send.target_users')}
                   </label>
                 ))}
               </div>
@@ -464,12 +516,15 @@ function FlowsPanel() {
               <div className="flow-meta">
                 {t('admin.flows.stats_triggered', { count: flow.trigger_count })}
                 {flow.last_triggered &&
-                  ` · ${t('admin.flows.stats_last', { time: new Date(flow.last_triggered).toLocaleString('zh-TW') })}`}
+                  ` · ${t('admin.flows.stats_last', { time: formatDateTime(flow.last_triggered) })}`}
               </div>
               <div className="flow-trigger-example">
-                <code>
-                  curl -X POST /api/flows/trigger/{flow.flow_key} -H "X-API-Key: sk_..." -d
-                  '{'{}'}'
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '5px' }}>{t('admin.flows.trigger_example')}:</div>
+                <code style={{ display: 'block', padding: '10px', background: 'rgba(0,0,0,0.3)', borderRadius: '4px', wordBreak: 'break-all', whiteSpace: 'pre-wrap' }}>
+                  curl.exe -X POST "{window.location.origin}/api/flows/trigger/{flow.flow_key}" ^<br/>
+                  &nbsp;&nbsp;-H "Authorization: sk_YOUR_API_KEY" ^<br/>
+                  &nbsp;&nbsp;-H "Content-Type: application/json" ^<br/>
+                  &nbsp;&nbsp;-d "{'"{}"'}"
                 </code>
               </div>
             </div>
@@ -521,7 +576,7 @@ function DevicesPanel() {
               <td>
                 <span className="badge">{d.platform}</span>
               </td>
-              <td>{new Date(d.last_active).toLocaleString('zh-TW')}</td>
+              <td>{formatDateTime(d.last_active)}</td>
               <td>
                 <span className={`status-dot ${d.is_active ? 'active' : 'inactive'}`}>
                   {d.is_active ? t('admin.devices.status_active') : t('admin.devices.status_inactive')}
@@ -642,7 +697,7 @@ function ApiKeysPanel() {
                 <code>{k.key_prefix}...</code>
               </td>
               <td>{k.usage_count}</td>
-              <td>{k.last_used_at ? new Date(k.last_used_at).toLocaleString('zh-TW') : '—'}</td>
+              <td>{formatDateTime(k.last_used_at)}</td>
               <td>
                 <span className={`status-dot ${k.is_active ? 'active' : 'inactive'}`}>
                   {k.is_active ? t('admin.apikeys.status_active') : t('admin.apikeys.status_revoked')}
@@ -685,7 +740,7 @@ function SettingsPanel() {
         current_password: form.current_password,
         new_password: form.new_password,
       });
-      setStatus({ ok: true, msg: '密碼已成功更新' });
+      setStatus({ ok: true, msg: t('admin.settings.success') });
       setForm({ current_password: '', new_password: '', confirm_password: '' });
     } catch (err) {
       setStatus({ ok: false, msg: err.response?.data?.error || t('admin.settings.error_failed') });
@@ -750,6 +805,7 @@ function AdminPage() {
     t('admin.flows.title'),
     t('admin.devices.title'),
     t('admin.apikeys.title'),
+    t('admin.nav.qrcode'),
     t('admin.settings.title')
   ];
   const [tab, setTab] = useState(0);
@@ -821,7 +877,9 @@ function AdminPage() {
                 {t('admin.overview.clear_btn')}
               </button>
             </div>
+            
             <StatsPanel stats={stats} />
+            
             <h3 style={{ marginTop: '24px' }}>{t('admin.overview.recent_title')}</h3>
             <table className="data-table">
               <thead>
@@ -842,7 +900,7 @@ function AdminPage() {
                       <span className={`severity-chip ${n.severity}`}>{n.severity}</span>
                     </td>
                     <td>{n.flow_key ? <code>{n.flow_key}</code> : t('admin.overview.source_manual')}</td>
-                    <td>{new Date(n.created_at).toLocaleString('zh-TW')}</td>
+                    <td>{formatDateTime(n.created_at)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -853,8 +911,18 @@ function AdminPage() {
         {tab === 2 && <FlowsPanel />}
         {tab === 3 && <DevicesPanel />}
         {tab === 4 && <ApiKeysPanel />}
-        {tab === 5 && <SettingsPanel />}
+        {tab === 5 && <QRCodeCard />}
+        {tab === 6 && <SettingsPanel />}
       </main>
+      <footer style={{ 
+        padding: '20px', 
+        textAlign: 'center', 
+        color: 'var(--text-secondary)', 
+        fontSize: '0.8rem',
+        opacity: 0.6
+      }}>
+        {t('admin.header_title')} v1.1.0-timezone-fix · Built with ❤️ for Taiwan
+      </footer>
     </div>
   );
 }

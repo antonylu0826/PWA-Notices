@@ -3,9 +3,10 @@ services:
     build:
       context: ./server
     restart: unless-stopped
-    env_file: ./server/.env
+    env_file: .env
     environment:
       - NODE_ENV=production
+      - TZ=${TZ:-UTC}
       - CORS_ORIGIN=*        # server not exposed externally; nginx proxies all API calls
     volumes:
       - server_data:/app/data
@@ -16,7 +17,17 @@ services:
   client:
     build:
       context: ./client
+      args:
+        - VITE_APP_NAME=${VITE_APP_NAME}
+        - VITE_FIREBASE_API_KEY=${VITE_FIREBASE_API_KEY}
+        - VITE_FIREBASE_AUTH_DOMAIN=${VITE_FIREBASE_AUTH_DOMAIN}
+        - VITE_FIREBASE_PROJECT_ID=${VITE_FIREBASE_PROJECT_ID}
+        - VITE_FIREBASE_STORAGE_BUCKET=${VITE_FIREBASE_STORAGE_BUCKET}
+        - VITE_FIREBASE_MESSAGING_SENDER_ID=${VITE_FIREBASE_MESSAGING_SENDER_ID}
+        - VITE_FIREBASE_APP_ID=${VITE_FIREBASE_APP_ID}
+        - VITE_FIREBASE_VAPID_KEY=${VITE_FIREBASE_VAPID_KEY}
     restart: unless-stopped
+    env_file: .env
     networks:
       - internal
     depends_on:

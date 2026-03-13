@@ -13,7 +13,8 @@ function requireAdmin(req, res, next) {
   }
 
   if (!token) {
-    return res.status(401).json({ error: 'Missing authorization token' });
+    console.log('[AuthAdmin] Missing Token. Headers:', JSON.stringify(req.headers));
+    return res.status(401).json({ error: 'Missing admin authorization token' });
   }
 
   try {
@@ -26,12 +27,29 @@ function requireAdmin(req, res, next) {
 }
 
 function requireApiKey(req, res, next) {
-  const key = req.headers['x-api-key'];
-  if (!key) return res.status(401).json({ error: 'Missing X-API-Key header' });
+  let key = req.headers['x-api-key'];
+
+  // Also support Authorization header
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    // If it's sk_ format or we don't have an x-api-key, use it
+    if (authHeader.startsWith('sk_') || !key) {
+      key = authHeader.replace('Bearer ', '');
+    }
+  }
+
+  if (!key) {
+    console.log('[Auth] Missing API Key. Headers:', JSON.stringify(req.headers));
+    return res.status(401).json({ error: 'Missing API Key' });
+  }
 
   const hash = crypto.createHash('sha256').update(key).digest('hex');
   const apiKey = db.prepare('SELECT * FROM api_keys WHERE key_hash = ? AND is_active = 1').get(hash);
-  if (!apiKey) return res.status(401).json({ error: 'Invalid API key' });
+  
+  if (!apiKey) {
+    console.log('[Auth] Invalid API Key attempt. Key start:', key.substring(0, 6));
+    return res.status(401).json({ error: 'Invalid API key' });
+  }
 
   db.prepare('UPDATE api_keys SET last_used_at = CURRENT_TIMESTAMP, usage_count = usage_count + 1 WHERE id = ?').run(apiKey.id);
   req.apiKey = apiKey;

@@ -1,6 +1,6 @@
 {
   "name": "Notices",
-  "short_name": "通知中心",
+  "short_name": "台G電",
   "description": "即時推播通知系統",
   "start_url": "/",
   "display": "standalone",

@@ -2,21 +2,29 @@
 
 A self-hosted PWA push notification platform. External systems (PLCs, servers, scripts) send HTTP requests to trigger notification flows, which deliver real-time FCM push notifications to registered mobile/desktop users.
 
+## 🌟 Key Enhancements
+
+- **One-Stop Environment Management** — All configurations are centralized in the root `.env` file, eliminating the need for multi-location maintenance.
+- **Global Timezone Optimization (TZ)** — Automatically converts UTC time from the database to the user's local timezone (e.g., Taipei Time), supporting 24-hour format display.
+- **Customizable Notification Branding** — Dynamically modify PWA installation names and notification banner sources via `VITE_APP_NAME`, resolving hardcoded name issues on iOS PWA.
+- **Quick Install QR Code** — Built-in QR Code tab in the admin dashboard automatically detects the URL and generates a scan code for rapid PWA installation on mobile devices.
+- **High Concurrency Stability** — Optimized Rate Limit settings to resolve 429 errors caused by frequent PWA refreshes.
+
 ## Features
 
-- **FCM Push Notifications** — foreground and background delivery via Firebase Cloud Messaging
-- **Notification Flows** — configurable flows with `{{variable}}` templates, condition evaluation, rate limiting, and recipient targeting
-- **Admin Dashboard** — send notifications, manage flows, view devices, issue API keys, change password
-- **PWA** — installable on Android/iOS, works offline-capable
-- **Docker + zrok** — fully containerized with automatic public HTTPS tunnel
+- **FCM Push Notifications** — foreground and background delivery via Firebase Cloud Messaging. Optimized for iOS subtitle support.
+- **Notification Flows** — configurable flows with `{{variable}}` templates, condition evaluation, rate limiting, and recipient targeting.
+- **Admin Dashboard** — send notifications, manage flows, view devices, issue API keys, change password, and system health monitoring.
+- **PWA** — installable on Android/iOS, works with dynamic manifest generation for custom branding.
+- **Docker + zrok** — fully containerized with automatic public HTTPS tunnel.
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Client | React 18, Vite, vite-plugin-pwa, Firebase Web SDK |
-| Server | Express.js, better-sqlite3, Firebase Admin SDK, JWT |
-| Infra | Docker Compose, nginx, zrok |
+| Client | React 18, Vite, i18next, qrcode.react, Firebase Web SDK |
+| Server | Express.js, better-sqlite3, Firebase Admin SDK, JWT, express-rate-limit |
+| Infra | Docker Compose, nginx (Security Headers + Proxy), zrok |
 
 ## Architecture
 
@@ -27,134 +35,95 @@ Internet
 zrok tunnel (HTTPS)
    │
    ▼
-nginx (client container)
+nginx (client container) — [CSP / Security Headers]
    ├── /* → serves React PWA
    └── /api/* → proxy → Express server (internal only)
-                              │
-                              ▼
-                         SQLite (volume)
+                               │
+                               ▼
+                          SQLite (volume)
 ```
 
 ## Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [Firebase project](https://console.firebase.google.com/) with Cloud Messaging enabled
+- [Firebase project](https://console.firebase.com/) with Cloud Messaging enabled
 - [zrok account](https://zrok.io) (free tier available)
 
 ## Setup
 
-### 1. Firebase
+### 1. Firebase Configuration
 
 **Server (Admin SDK):**
-1. Firebase Console → Project Settings → Service Accounts → Generate new private key
-2. Note: `project_id`, `private_key`, `client_email`
+1. Firebase Console → Project Settings → Service Accounts → Generate new private key.
+2. Note: `project_id`, `private_key` (JSON string in .env), `client_email`.
 
-**Client (Web SDK):**
-1. Firebase Console → Project Settings → General → Web app → Firebase config
-2. Project Settings → Cloud Messaging → Web Push certificates → Generate key pair (VAPID)
+**Client (Web SDK):
+1. Firebase Console → Project Settings → General → Web app → Firebase config.
+2. Project Settings → Cloud Messaging → Web Push certificates → Generate key pair (VAPID).
 
 ### 2. Configure Environment
 
+Now all settings are unified in the root `.env`:
+
 ```bash
-# Server
-cp server/.env.example server/.env
-# Fill in: JWT_SECRET, FIREBASE_*, ADMIN_USERNAME, ADMIN_PASSWORD
-
-# Client
-cp client/.env.example client/.env
-# Fill in: VITE_FIREBASE_*
-
-# Root (zrok)
+# Root directory
 cp .env.example .env
-# Fill in: ZROK_ENABLE_TOKEN (from zrok.io Dashboard → Enable Environment)
+# Fill in: 
+# - VITE_APP_NAME: Your custom app name
+# - TZ: Your timezone (e.g., Asia/Taipei)
+# - ZROK_ENABLE_TOKEN: From zrok.io
+# - FIREBASE_*: Backend/Frontend shared and private keys
 ```
 
-### 3. First Run
+### 3. Build & Deployment
 
 ```bash
+# Rebuild and start everything
 docker compose up -d --build
+
+# Verify zrok URL
 docker compose logs -f zrok
-# Wait for: https://xxxxxxxx.share.zrok.io
+# Look for: https://xxxxxxxx.share.zrok.io
 ```
 
-The zrok environment is enabled automatically on first start and persisted in a Docker volume. Subsequent restarts skip the enable step.
+## Usage
 
-### 4. Access
+### Public Access
 
 | URL | Purpose |
 |-----|---------|
 | `https://<zrok-url>/register` | User device registration |
 | `https://<zrok-url>/` | Notification inbox (PWA) |
-| `https://<zrok-url>/admin/login` | Admin dashboard |
+| `https://<zrok-url>/admin/login` | Admin dashboard (Default: admin/admin123) |
 
-## Triggering Notifications from External Systems
-
-### Create a Flow
-
-1. Admin → 通知流程 → 新增流程
-2. Set a `flow_key` (e.g. `machine_alarm`)
-3. Define title/message templates using `{{variable}}` syntax
-
-### Create an API Key
-
-Admin → API Keys → 新增 → copy the key (shown once)
-
-### Trigger via HTTP
+### Trigger via API
 
 ```bash
-# Trigger by flow key
-curl -X POST https://<zrok-url>/api/flows/trigger/machine_alarm \
-  -H "X-API-Key: sk_..." \
+# Example: Triggering a flow named 'test'
+curl -X POST https://<zrok-url>/api/flows/trigger/test \
+  -H "Authorization: sk_YOUR_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"machine_id": "M-01", "error_code": "E42", "message": "Overheat"}'
-
-# Trigger via generic webhook
-curl -X POST https://<zrok-url>/api/flows/webhook \
-  -H "X-API-Key: sk_..." \
-  -H "Content-Type: application/json" \
-  -d '{"flow_key": "machine_alarm", "machine_id": "M-01"}'
+  -d "{}"
 ```
 
-### Condition Evaluation
+## Timezone Support
 
-Flows can filter triggers using conditions:
+The system stores all timestamps in **UTC** within the SQLite database. 
+- **Backend**: Synchronized with the host via `TZ` environment variable in Docker.
+- **Admin UI**: Automatically converts UTC strings to the user's browser local time with a standardized `YYYY/MM/DD HH:MM:SS` format.
 
-```json
-[
-  { "field": "severity", "operator": "in", "value": ["high", "urgent"] },
-  { "field": "temperature", "operator": "gt", "value": 80 }
-]
-```
-
-Supported operators: `eq`, `neq`, `in`, `contains`, `gt`, `lt`
-
-## Development (without Docker)
+## Deployment Commands
 
 ```bash
-# Server
-cd server && npm install && npm run dev
-
-# Client (separate terminal)
-cd client && npm install && npm run dev
-```
-
-Client dev server proxies `/api` to `http://localhost:3001`.
-
-## Managing the Deployment
-
-```bash
-# Start
-docker compose up -d
-
-# Stop
-docker compose down
-
-# View logs
-docker compose logs -f
-
-# Rebuild after code changes
+# Update and Restart
 docker compose up -d --build
 
-# Reset everything (including database)
+# View container logs
+docker compose logs --tail=100 -f server
+
+# Clean up (Keep DB)
+docker compose down
+
+# Full Reset (Wipe DB)
 docker compose down -v
 ```

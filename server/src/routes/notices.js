@@ -12,7 +12,8 @@ router.get('/', (req, res) => {
   const notices = db
     .prepare(
       `
-    SELECT n.*,
+    SELECT n.id, n.title, n.message, n.severity, n.flow_key,
+      strftime('%Y-%m-%dT%H:%M:%SZ', n.created_at) as created_at,
       CASE WHEN na.id IS NOT NULL THEN 1 ELSE 0 END as acked
     FROM notices n
     LEFT JOIN notice_acks na ON na.notice_id = n.id AND na.device_id = ?
@@ -92,7 +93,7 @@ router.post('/send', requireAdmin, async (req, res) => {
 // All notices (admin)
 router.get('/all', requireAdmin, (req, res) => {
   const notices = db
-    .prepare('SELECT * FROM notices ORDER BY created_at DESC LIMIT 100')
+    .prepare("SELECT id, title, message, severity, flow_key, strftime('%Y-%m-%dT%H:%M:%SZ', created_at) as created_at FROM notices ORDER BY created_at DESC LIMIT 100")
     .all();
   res.json(notices);
 });

@@ -5,6 +5,33 @@ const { executeFlow } = require('../services/flowEngine');
 
 const router = express.Router();
 
+// --- Trigger endpoints (API Key auth) ---
+
+router.post('/trigger/:flowKey', requireApiKey, async (req, res) => {
+  const flow = db
+    .prepare('SELECT * FROM flows WHERE flow_key = ? AND enabled = 1')
+    .get(req.params.flowKey);
+  if (!flow) return res.status(404).json({ error: req.t('api.error.not_found') });
+
+  const result = await executeFlow(flow, req.body || {});
+  if (result.skipped) return res.json({ status: 'skipped', reason: result.reason });
+  res.json({ status: 'success', ...result });
+});
+
+router.post('/webhook', requireApiKey, async (req, res) => {
+  const { flow_key, ...payload } = req.body;
+  if (!flow_key) return res.status(400).json({ error: req.t('api.error.required_field', { field: 'flow_key' }) });
+
+  const flow = db
+    .prepare('SELECT * FROM flows WHERE flow_key = ? AND enabled = 1')
+    .get(flow_key);
+  if (!flow) return res.status(404).json({ error: req.t('api.error.not_found') });
+
+  const result = await executeFlow(flow, payload);
+  if (result.skipped) return res.json({ status: 'skipped', reason: result.reason });
+  res.json({ status: 'success', ...result });
+});
+
 // --- Admin CRUD ---
 
 router.get('/', requireAdmin, (req, res) => {
@@ -146,33 +173,6 @@ router.post('/:id/test', requireAdmin, async (req, res) => {
   const testFlow = { ...flow, enabled: 1, rate_limit_sec: 0 };
   const result = await executeFlow(testFlow, req.body || {});
   res.json({ status: 'test_sent', ...result });
-});
-
-// --- Trigger endpoints (API Key auth) ---
-
-router.post('/trigger/:flowKey', requireApiKey, async (req, res) => {
-  const flow = db
-    .prepare('SELECT * FROM flows WHERE flow_key = ? AND enabled = 1')
-    .get(req.params.flowKey);
-  if (!flow) return res.status(404).json({ error: req.t('api.error.not_found') });
-
-  const result = await executeFlow(flow, req.body || {});
-  if (result.skipped) return res.json({ status: 'skipped', reason: result.reason });
-  res.json({ status: 'success', ...result });
-});
-
-router.post('/webhook', requireApiKey, async (req, res) => {
-  const { flow_key, ...payload } = req.body;
-  if (!flow_key) return res.status(400).json({ error: req.t('api.error.required_field', { field: 'flow_key' }) });
-
-  const flow = db
-    .prepare('SELECT * FROM flows WHERE flow_key = ? AND enabled = 1')
-    .get(flow_key);
-  if (!flow) return res.status(404).json({ error: req.t('api.error.not_found') });
-
-  const result = await executeFlow(flow, payload);
-  if (result.skipped) return res.json({ status: 'skipped', reason: result.reason });
-  res.json({ status: 'success', ...result });
 });
 
 module.exports = router;

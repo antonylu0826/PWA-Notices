@@ -1,10 +1,10 @@
 {
   "admin": {
     "title": "管理後台",
-    "header_title": "⚙️ 通知中心管理",
+    "header_title": "⚙️ 系統管理",
     "login": {
       "title": "管理後台",
-      "subtitle": "通知中心管理",
+      "subtitle": "推播系統管理",
       "username_placeholder": "帳號",
       "password_placeholder": "密碼",
       "submit": "登入",
@@ -15,6 +15,7 @@
       "flows": "通知流程",
       "devices": "已註冊裝置",
       "apikeys": "API Keys",
+      "qrcode": "QR Code",
       "settings": "設定",
       "logout": "登出"
     },
@@ -134,10 +135,19 @@
         "time": "時間"
       },
       "source_manual": "手動"
+    },
+    "qrcode": {
+      "title": "📱 快速存取 QR Code",
+      "hint": "掃描上方 QR Code 以在手機開啟 Notice 端",
+      "copy_success": "網址已複製到剪貼簿",
+      "btn_copy": "複製網址"
+    },
+    "common": {
+      "delete": "刪除"
     }
   },
   "notice": {
-    "title": "通知中心",
+    "title": "通知",
     "empty": "目前沒有未讀通知",
     "source_label": "來源：",
     "btn_ack": "標示已讀",

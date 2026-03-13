@@ -17,20 +17,47 @@ function getApp() {
 
 async function sendToToken(token, title, body, data = {}) {
   const app = getApp();
+  const appName = process.env.VITE_APP_NAME || '通知中心';
+  
   if (!app) {
     console.warn('[FCM] Firebase not configured, skipping push notification');
     return { success: false, error: 'Firebase not configured', invalidToken: false };
   }
   try {
-    const result = await admin.messaging().send({
+    const payload = {
       token,
-      notification: { title, body },
-      webpush: {
-        notification: { title, body, icon: '/icon-192.png', badge: '/icon-192.png' },
-        fcm_options: { link: '/' },
+      // On iOS:
+      // notification.title: Main title
+      // apns.payload.aps.alert.subtitle: Secondary title (We use appName here)
+      notification: { 
+        title: title || appName, 
+        body: body 
       },
-      data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
-    });
+      // Minimal data to prevent SDK/SW from attempting to show a second notification
+      data: {
+        type: 'ping',
+        noticeId: String(data.noticeId || '')
+      },
+      apns: {
+        payload: {
+          aps: {
+            'content-available': 1,
+            'mutable-content': 1,
+            alert: {
+              subtitle: title ? appName : '' 
+            }
+          }
+        },
+        headers: {
+          'apns-priority': '10'
+        }
+      },
+      android: {
+        priority: 'high'
+      }
+    };
+
+    const result = await admin.messaging().send(payload);
     return { success: true, messageId: result };
   } catch (error) {
     const isInvalid =

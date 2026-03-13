@@ -1,10 +1,10 @@
 {
   "admin": {
     "title": "Admin Dashboard",
-    "header_title": "⚙️ Notice Center Management",
+    "header_title": "⚙️ System Management",
     "login": {
       "title": "Admin Console",
-      "subtitle": "Notice Center Management",
+      "subtitle": "Push System Management",
       "username_placeholder": "Username",
       "password_placeholder": "Password",
       "submit": "Login",
@@ -15,6 +15,7 @@
       "flows": "Notice Flows",
       "devices": "Registered Devices",
       "apikeys": "API Keys",
+      "qrcode": "QR Code",
       "settings": "Settings",
       "logout": "Logout"
     },
@@ -134,10 +135,19 @@
         "time": "Time"
       },
       "source_manual": "Manual"
+    },
+    "qrcode": {
+      "title": "📱 Access QR Code",
+      "hint": "Scan to open Notice on your mobile device",
+      "copy_success": "URL copied to clipboard",
+      "btn_copy": "Copy URL"
+    },
+    "common": {
+      "delete": "Delete"
     }
   },
   "notice": {
-    "title": "Notice Center",
+    "title": "Notice",
     "empty": "No unread notices",
     "source_label": "Source: ",
     "btn_ack": "Ack",

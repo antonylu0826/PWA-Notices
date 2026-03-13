@@ -54,8 +54,8 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS notice_acks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    notice_id INTEGER NOT NULL REFERENCES notices(id),
-    device_id INTEGER NOT NULL REFERENCES devices(id),
+    notice_id INTEGER NOT NULL REFERENCES notices(id) ON DELETE CASCADE,
+    device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
     acked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(notice_id, device_id)
   );

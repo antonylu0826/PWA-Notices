@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/', requireAdmin, (req, res) => {
   const keys = db
     .prepare(
-      'SELECT id, name, key_prefix, permissions, is_active, last_used_at, usage_count, created_at FROM api_keys ORDER BY created_at DESC'
+      "SELECT id, name, key_prefix, permissions, is_active, strftime('%Y-%m-%dT%H:%M:%SZ', last_used_at) as last_used_at, usage_count, strftime('%Y-%m-%dT%H:%M:%SZ', created_at) as created_at FROM api_keys ORDER BY created_at DESC"
     )
     .all();
   res.json(keys);
