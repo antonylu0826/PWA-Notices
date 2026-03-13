@@ -18,6 +18,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(require('./i18n').middleware);
 
 // Rate limiting
 const limiter = rateLimit({

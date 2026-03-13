@@ -28,7 +28,7 @@ router.get('/', (req, res) => {
 // ACK a notice (public)
 router.post('/ack/:noticeId', (req, res) => {
   const { device_id } = req.body;
-  if (!device_id) return res.status(400).json({ error: 'device_id required' });
+  if (!device_id) return res.status(400).json({ error: req.t('api.error.required_field', { field: 'device_id' }) });
 
   db.prepare(`
     INSERT OR IGNORE INTO notice_acks (notice_id, device_id) VALUES (?, ?)
@@ -40,7 +40,7 @@ router.post('/ack/:noticeId', (req, res) => {
 // Send notice manually (admin)
 router.post('/send', requireAdmin, async (req, res) => {
   const { title, message, severity = 'info', target_username, target_usernames } = req.body;
-  if (!title || !message) return res.status(400).json({ error: 'title and message required' });
+  if (!title || !message) return res.status(400).json({ error: req.t('api.error.required_field', { field: 'title, message' }) });
 
   // Support both single username (legacy) and array of usernames
   const usernames = target_usernames?.length

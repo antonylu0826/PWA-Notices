@@ -1,29 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 // --- Sub-components ---
 
 function StatsPanel({ stats }) {
+  const { t } = useTranslation();
   return (
     <div className="stats-grid">
       <div className="stat-card">
         <span className="stat-value">{stats.devices}</span>
-        <span className="stat-label">已註冊裝置</span>
+        <span className="stat-label">{t('admin.stats.registered_devices')}</span>
       </div>
       <div className="stat-card">
         <span className="stat-value">{stats.total}</span>
-        <span className="stat-label">通知總計</span>
+        <span className="stat-label">{t('admin.stats.total_notices')}</span>
       </div>
       <div className="stat-card">
         <span className="stat-value">{stats.pending_acks}</span>
-        <span className="stat-label">未簽收通知</span>
+        <span className="stat-label">{t('admin.stats.pending_acks')}</span>
       </div>
     </div>
   );
 }
 
 function SendPanel() {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ title: '', message: '', severity: 'info' });
   const [targetType, setTargetType] = useState('all');
   const [targetUsers, setTargetUsers] = useState([]);
@@ -47,7 +51,7 @@ function SendPanel() {
   const handleSend = async (e) => {
     e.preventDefault();
     if (targetType === 'users' && targetUsers.length === 0) {
-      alert('請至少選擇一位用戶');
+      alert(t('admin.send.select_user_error'));
       return;
     }
     setLoading(true);
@@ -58,12 +62,12 @@ function SendPanel() {
         target_usernames: targetType === 'users' ? targetUsers : [],
       };
       const res = await api.post('/notices/send', payload);
-      setStatus({ ok: true, msg: `已發送給 ${res.data.sent} 個裝置` });
+      setStatus({ ok: true, msg: t('admin.send.success_msg', { count: res.data.sent }) });
       setForm({ title: '', message: '', severity: 'info' });
       setTargetType('all');
       setTargetUsers([]);
     } catch (err) {
-      setStatus({ ok: false, msg: err.response?.data?.error || '發送失敗' });
+      setStatus({ ok: false, msg: err.response?.data?.error || t('admin.send.failed_msg') });
     } finally {
       setLoading(false);
     }
@@ -71,30 +75,30 @@ function SendPanel() {
 
   return (
     <div className="panel">
-      <h2>📣 發送即時推播</h2>
+      <h2>📣 {t('admin.send.title')}</h2>
       <form onSubmit={handleSend} className="form-stack">
         <div className="form-group">
-          <label>通知標題</label>
+          <label>{t('admin.send.label_title')}</label>
           <input
             className="input"
             required
-            placeholder="標題"
+            placeholder={t('admin.send.placeholder_title')}
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
           />
         </div>
         <div className="form-group">
-          <label>內容</label>
+          <label>{t('admin.send.label_message')}</label>
           <textarea
             className="input textarea"
             required
-            placeholder="訊息內容..."
+            placeholder={t('admin.send.placeholder_message')}
             value={form.message}
             onChange={(e) => setForm({ ...form, message: e.target.value })}
           />
         </div>
         <div className="form-group">
-          <label>緊急程度</label>
+          <label>{t('admin.send.label_severity')}</label>
           <div className="radio-group">
             {['info', 'warning', 'critical'].map((s) => (
               <label
@@ -108,13 +112,13 @@ function SendPanel() {
                   checked={form.severity === s}
                   onChange={(e) => setForm({ ...form, severity: e.target.value })}
                 />
-                {s === 'info' ? '一般' : s === 'warning' ? '警告' : '緊急'}
+                {s === 'info' ? t('admin.send.severity_info') : s === 'warning' ? t('admin.send.severity_warning') : t('admin.send.severity_critical')}
               </label>
             ))}
           </div>
         </div>
         <div className="form-group">
-          <label>發送對象</label>
+          <label>{t('admin.send.label_target')}</label>
           <div className="radio-group" style={{ marginBottom: '8px' }}>
             {['all', 'users'].map((t) => (
               <label
@@ -128,14 +132,14 @@ function SendPanel() {
                   checked={targetType === t}
                   onChange={() => { setTargetType(t); setTargetUsers([]); }}
                 />
-                {t === 'all' ? '所有人' : '指定用戶'}
+                {t === 'all' ? t('admin.send.target_all') : t('admin.send.target_users')}
               </label>
             ))}
           </div>
           {targetType === 'users' && (
             <div className="checkbox-list">
               {users.length === 0 ? (
-                <span className="hint-text">尚無已註冊用戶</span>
+                <span className="hint-text">{t('admin.send.no_users')}</span>
               ) : (
                 users.map((u) => (
                   <label key={u} className="checkbox-label">
@@ -152,7 +156,7 @@ function SendPanel() {
           )}
         </div>
         <button className="btn-primary" type="submit" disabled={loading}>
-          {loading ? '發送中...' : '立即發送'}
+          {loading ? t('admin.send.sending') : t('admin.send.submit')}
         </button>
         {status && <p className={status.ok ? 'success-text' : 'error-text'}>{status.msg}</p>}
       </form>
@@ -174,6 +178,7 @@ const EMPTY_FORM = {
 };
 
 function FlowsPanel() {
+  const { t } = useTranslation();
   const [flows, setFlows] = useState([]);
   const [users, setUsers] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -216,7 +221,7 @@ function FlowsPanel() {
       setForm(EMPTY_FORM);
       fetchFlows();
     } catch (err) {
-      alert(err.response?.data?.error || '儲存失敗');
+      alert(err.response?.data?.error || t('admin.flows.save_failed'));
     }
   };
 
@@ -249,7 +254,7 @@ function FlowsPanel() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('確定刪除此流程？')) return;
+    if (!confirm(t('admin.flows.confirm_delete'))) return;
     await api.delete(`/flows/${id}`);
     fetchFlows();
   };
@@ -257,16 +262,16 @@ function FlowsPanel() {
   const handleTest = async (flow) => {
     try {
       const res = await api.post(`/flows/${flow.id}/test`, {});
-      alert(`測試發送成功，推播至 ${res.data.sent ?? 0} 個裝置`);
+      alert(t('admin.flows.test_success', { count: res.data.sent ?? 0 }));
     } catch (err) {
-      alert(err.response?.data?.error || '測試失敗');
+      alert(err.response?.data?.error || t('admin.flows.test_failed'));
     }
   };
 
   return (
     <div className="panel">
       <div className="panel-header">
-        <h2>⚡ 通知流程</h2>
+        <h2>{t('admin.flows.title')}</h2>
         <button
           className="btn-small"
           onClick={() => {
@@ -275,83 +280,83 @@ function FlowsPanel() {
             setForm(EMPTY_FORM);
           }}
         >
-          + 新增流程
+          {t('admin.flows.add')}
         </button>
       </div>
 
       {showForm && (
         <div className="form-card">
-          <h3>{editingFlow ? '編輯流程' : '新增流程'}</h3>
+          <h3>{editingFlow ? t('admin.flows.edit') : t('admin.flows.add')}</h3>
           <form onSubmit={handleSave} className="form-stack">
             <div className="form-row">
               <div className="form-group">
-                <label>Flow Key (唯一識別碼)</label>
+                <label>{t('admin.flows.label_key')}</label>
                 <input
                   className="input"
                   required
-                  placeholder="e.g. welding_alarm"
+                  placeholder={t('admin.flows.placeholder_key')}
                   value={form.flow_key}
                   onChange={(e) => setForm({ ...form, flow_key: e.target.value })}
                   disabled={!!editingFlow}
                 />
               </div>
               <div className="form-group">
-                <label>名稱</label>
+                <label>{t('admin.flows.label_name')}</label>
                 <input
                   className="input"
                   required
-                  placeholder="流程名稱"
+                  placeholder={t('admin.flows.placeholder_name')}
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
               </div>
             </div>
             <div className="form-group">
-              <label>說明（可選）</label>
+              <label>{t('admin.flows.label_desc')}</label>
               <input
                 className="input"
-                placeholder="流程說明"
+                placeholder={t('admin.flows.placeholder_desc')}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
               />
             </div>
             <div className="form-group">
               <label>
-                通知標題模板{' '}
-                <span className="hint-text">（可用 {'{{變數}}'} 語法）</span>
+                {t('admin.flows.label_title_tmpl')}{' '}
+                <span className="hint-text">{t('admin.flows.hint_vars')}</span>
               </label>
               <input
                 className="input"
                 required
-                placeholder="例：機台 {{machine_id}} 警報"
+                placeholder={t('admin.flows.placeholder_title_tmpl')}
                 value={form.template_title}
                 onChange={(e) => setForm({ ...form, template_title: e.target.value })}
               />
             </div>
             <div className="form-group">
-              <label>通知內容模板</label>
+              <label>{t('admin.flows.label_msg_tmpl')}</label>
               <textarea
                 className="input textarea"
                 required
-                placeholder="例：錯誤代碼 {{error_code}}：{{message}}"
+                placeholder={t('admin.flows.placeholder_msg_tmpl')}
                 value={form.template_message}
                 onChange={(e) => setForm({ ...form, template_message: e.target.value })}
               />
             </div>
             <div className="form-group">
-              <label>緊急程度</label>
+              <label>{t('admin.flows.label_severity')}</label>
               <select
                 className="input"
                 value={form.template_severity}
                 onChange={(e) => setForm({ ...form, template_severity: e.target.value })}
               >
-                <option value="info">一般 (info)</option>
-                <option value="warning">警告 (warning)</option>
-                <option value="critical">緊急 (critical)</option>
+                <option value="info">{t('admin.send.severity_info')} (info)</option>
+                <option value="warning">{t('admin.send.severity_warning')} (warning)</option>
+                <option value="critical">{t('admin.send.severity_critical')} (critical)</option>
               </select>
             </div>
             <div className="form-group">
-              <label>觸發條件 (JSON Array)</label>
+              <label>{t('admin.flows.label_conditions')}</label>
               <textarea
                 className="input textarea small"
                 placeholder='[{"field":"severity","operator":"in","value":["high","urgent"]}]'
@@ -360,7 +365,7 @@ function FlowsPanel() {
               />
             </div>
             <div className="form-group">
-              <label>接收者</label>
+              <label>{t('admin.flows.label_recipients')}</label>
               <div className="radio-group" style={{ marginBottom: '8px' }}>
                 {['all', 'users'].map((t) => (
                   <label
@@ -381,7 +386,7 @@ function FlowsPanel() {
               {form.recipientType === 'users' && (
                 <div className="checkbox-list">
                   {users.length === 0 ? (
-                    <span className="hint-text">尚無已註冊用戶</span>
+                    <span className="hint-text">{t('admin.send.no_users')}</span>
                   ) : (
                     users.map((u) => (
                       <label key={u} className="checkbox-label">
@@ -403,7 +408,7 @@ function FlowsPanel() {
               )}
             </div>
             <div className="form-group">
-              <label>頻率限制（秒，0=不限）</label>
+              <label>{t('admin.flows.label_rate_limit')}</label>
               <input
                 className="input"
                 type="number"
@@ -414,10 +419,10 @@ function FlowsPanel() {
             </div>
             <div className="form-actions">
               <button className="btn-primary" type="submit">
-                儲存
+                {t('common.save')}
               </button>
               <button className="btn-ghost" type="button" onClick={() => setShowForm(false)}>
-                取消
+                {t('common.cancel')}
               </button>
             </div>
           </form>
@@ -426,7 +431,7 @@ function FlowsPanel() {
 
       <div className="flow-list">
         {flows.length === 0 ? (
-          <p className="empty-text">尚未建立任何流程</p>
+          <p className="empty-text">{t('admin.flows.empty')}</p>
         ) : (
           flows.map((flow) => (
             <div key={flow.id} className={`flow-card ${flow.enabled ? '' : 'disabled'}`}>
@@ -440,26 +445,26 @@ function FlowsPanel() {
                     className={`toggle-btn ${flow.enabled ? 'on' : 'off'}`}
                     onClick={() => handleToggle(flow)}
                   >
-                    {flow.enabled ? '啟用' : '停用'}
+                    {flow.enabled ? t('admin.flows.status_on') : t('admin.flows.status_off')}
                   </button>
                   <button className="btn-small" onClick={() => handleTest(flow)}>
-                    測試
+                    {t('admin.flows.btn_test')}
                   </button>
                   <button className="btn-small" onClick={() => handleEdit(flow)}>
-                    編輯
+                    {t('admin.flows.btn_edit')}
                   </button>
                   <button
                     className="btn-small danger"
                     onClick={() => handleDelete(flow.id)}
                   >
-                    刪除
+                    {t('admin.flows.btn_delete')}
                   </button>
                 </div>
               </div>
               <div className="flow-meta">
-                觸發 {flow.trigger_count} 次
+                {t('admin.flows.stats_triggered', { count: flow.trigger_count })}
                 {flow.last_triggered &&
-                  ` · 最後：${new Date(flow.last_triggered).toLocaleString('zh-TW')}`}
+                  ` · ${t('admin.flows.stats_last', { time: new Date(flow.last_triggered).toLocaleString('zh-TW') })}`}
               </div>
               <div className="flow-trigger-example">
                 <code>
@@ -476,6 +481,7 @@ function FlowsPanel() {
 }
 
 function DevicesPanel() {
+  const { t } = useTranslation();
   const [devices, setDevices] = useState([]);
 
   const fetchDevices = async () => {
@@ -488,22 +494,22 @@ function DevicesPanel() {
   }, []);
 
   const handleDelete = async (id) => {
-    if (!confirm('確定刪除此裝置？')) return;
+    if (!confirm(t('admin.devices.confirm_delete'))) return;
     await api.delete(`/devices/${id}`);
     fetchDevices();
   };
 
   return (
     <div className="panel">
-      <h2>📱 已註冊裝置</h2>
+      <h2>{t('admin.devices.title')}</h2>
       <table className="data-table">
         <thead>
           <tr>
-            <th>用戶</th>
-            <th>平台</th>
-            <th>最後上線</th>
-            <th>狀態</th>
-            <th>操作</th>
+            <th>{t('admin.devices.table.user')}</th>
+            <th>{t('admin.devices.table.platform')}</th>
+            <th>{t('admin.devices.table.last_active')}</th>
+            <th>{t('admin.devices.table.status')}</th>
+            <th>{t('admin.devices.table.actions')}</th>
           </tr>
         </thead>
         <tbody>
@@ -518,12 +524,12 @@ function DevicesPanel() {
               <td>{new Date(d.last_active).toLocaleString('zh-TW')}</td>
               <td>
                 <span className={`status-dot ${d.is_active ? 'active' : 'inactive'}`}>
-                  {d.is_active ? '正常' : '停用'}
+                  {d.is_active ? t('admin.devices.status_active') : t('admin.devices.status_inactive')}
                 </span>
               </td>
               <td>
                 <button className="btn-small danger" onClick={() => handleDelete(d.id)}>
-                  刪除
+                  {t('admin.common.delete')}
                 </button>
               </td>
             </tr>
@@ -535,6 +541,7 @@ function DevicesPanel() {
 }
 
 function ApiKeysPanel() {
+  const { t } = useTranslation();
   const [keys, setKeys] = useState([]);
   const [newKey, setNewKey] = useState(null);
   const [form, setForm] = useState({ name: '' });
@@ -564,7 +571,7 @@ function ApiKeysPanel() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('確定刪除此 API Key？')) return;
+    if (!confirm(t('admin.apikeys.confirm_delete'))) return;
     await api.delete(`/api-keys/${id}`);
     fetchKeys();
   };
@@ -572,16 +579,16 @@ function ApiKeysPanel() {
   return (
     <div className="panel">
       <div className="panel-header">
-        <h2>🔑 API Keys</h2>
+        <h2>{t('admin.apikeys.title')}</h2>
         <button className="btn-small" onClick={() => setShowForm(!showForm)}>
-          + 新增
+          {t('admin.apikeys.add')}
         </button>
       </div>
 
       {newKey && (
         <div className="alert-box success">
           <p>
-            <strong>請複製此 API Key，離開後將無法再查看：</strong>
+            <strong>{t('admin.apikeys.copy_hint')}</strong>
           </p>
           <code className="key-display">{newKey}</code>
           <button
@@ -590,10 +597,10 @@ function ApiKeysPanel() {
               navigator.clipboard.writeText(newKey);
             }}
           >
-            複製
+            {t('admin.apikeys.btn_copy')}
           </button>
           <button className="btn-ghost" onClick={() => setNewKey(null)}>
-            關閉
+            {t('admin.apikeys.btn_close')}
           </button>
         </div>
       )}
@@ -603,15 +610,15 @@ function ApiKeysPanel() {
           <input
             className="input"
             required
-            placeholder="Key 名稱（例：工廠系統）"
+            placeholder={t('admin.apikeys.placeholder_name')}
             value={form.name}
             onChange={(e) => setForm({ name: e.target.value })}
           />
           <button className="btn-primary" type="submit">
-            建立
+            {t('admin.apikeys.btn_create')}
           </button>
           <button className="btn-ghost" type="button" onClick={() => setShowForm(false)}>
-            取消
+            {t('common.cancel')}
           </button>
         </form>
       )}
@@ -619,12 +626,12 @@ function ApiKeysPanel() {
       <table className="data-table">
         <thead>
           <tr>
-            <th>名稱</th>
-            <th>前綴</th>
-            <th>使用次數</th>
-            <th>最後使用</th>
-            <th>狀態</th>
-            <th>操作</th>
+            <th>{t('admin.apikeys.table.name')}</th>
+            <th>{t('admin.apikeys.table.prefix')}</th>
+            <th>{t('admin.apikeys.table.usage')}</th>
+            <th>{t('admin.apikeys.table.last_used')}</th>
+            <th>{t('admin.apikeys.table.status')}</th>
+            <th>{t('admin.apikeys.table.actions')}</th>
           </tr>
         </thead>
         <tbody>
@@ -638,17 +645,17 @@ function ApiKeysPanel() {
               <td>{k.last_used_at ? new Date(k.last_used_at).toLocaleString('zh-TW') : '—'}</td>
               <td>
                 <span className={`status-dot ${k.is_active ? 'active' : 'inactive'}`}>
-                  {k.is_active ? '有效' : '已撤銷'}
+                  {k.is_active ? t('admin.apikeys.status_active') : t('admin.apikeys.status_revoked')}
                 </span>
               </td>
               <td>
                 {k.is_active && (
                   <button className="btn-small" onClick={() => handleRevoke(k.id)}>
-                    撤銷
+                    {t('admin.apikeys.btn_revoke')}
                   </button>
                 )}
                 <button className="btn-small danger" onClick={() => handleDelete(k.id)}>
-                  刪除
+                  {t('admin.common.delete')}
                 </button>
               </td>
             </tr>
@@ -660,6 +667,7 @@ function ApiKeysPanel() {
 }
 
 function SettingsPanel() {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -667,7 +675,7 @@ function SettingsPanel() {
   const handleChange = async (e) => {
     e.preventDefault();
     if (form.new_password !== form.confirm_password) {
-      setStatus({ ok: false, msg: '新密碼與確認密碼不一致' });
+      setStatus({ ok: false, msg: t('admin.settings.error_mismatch') });
       return;
     }
     setLoading(true);
@@ -680,7 +688,7 @@ function SettingsPanel() {
       setStatus({ ok: true, msg: '密碼已成功更新' });
       setForm({ current_password: '', new_password: '', confirm_password: '' });
     } catch (err) {
-      setStatus({ ok: false, msg: err.response?.data?.error || '更新失敗' });
+      setStatus({ ok: false, msg: err.response?.data?.error || t('admin.settings.error_failed') });
     } finally {
       setLoading(false);
     }
@@ -688,12 +696,12 @@ function SettingsPanel() {
 
   return (
     <div className="panel">
-      <h2>⚙️ 帳號設定</h2>
+      <h2>{t('admin.settings.title')}</h2>
       <div className="form-card">
-        <h3>變更密碼</h3>
+        <h3>{t('admin.settings.change_password')}</h3>
         <form onSubmit={handleChange} className="form-stack">
           <div className="form-group">
-            <label>目前密碼</label>
+            <label>{t('admin.settings.label_current')}</label>
             <input
               className="input"
               type="password"
@@ -703,7 +711,7 @@ function SettingsPanel() {
             />
           </div>
           <div className="form-group">
-            <label>新密碼（至少 6 個字元）</label>
+            <label>{t('admin.settings.label_new')}</label>
             <input
               className="input"
               type="password"
@@ -714,7 +722,7 @@ function SettingsPanel() {
             />
           </div>
           <div className="form-group">
-            <label>確認新密碼</label>
+            <label>{t('admin.settings.label_confirm')}</label>
             <input
               className="input"
               type="password"
@@ -725,7 +733,7 @@ function SettingsPanel() {
           </div>
           {status && <p className={status.ok ? 'success-text' : 'error-text'}>{status.msg}</p>}
           <button className="btn-primary" type="submit" disabled={loading}>
-            {loading ? '更新中...' : '確認變更'}
+            {loading ? t('admin.settings.updating') : t('admin.settings.btn_submit')}
           </button>
         </form>
       </div>
@@ -734,9 +742,16 @@ function SettingsPanel() {
 }
 
 // --- Main AdminPage ---
-const TABS = ['概覽', '發送通知', '通知流程', '裝置管理', 'API Keys', '設定'];
-
-export default function AdminPage() {
+function AdminPage() {
+  const { t } = useTranslation();
+  const TABS = [
+    t('admin.overview.title'),
+    t('admin.send.title'),
+    t('admin.flows.title'),
+    t('admin.devices.title'),
+    t('admin.apikeys.title'),
+    t('admin.settings.title')
+  ];
   const [tab, setTab] = useState(0);
   const [stats, setStats] = useState({ devices: 0, total: 0, pending_acks: 0 });
   const [recentNotices, setRecentNotices] = useState([]);
@@ -760,7 +775,7 @@ export default function AdminPage() {
   }, [tab]);
 
   const handleClearNotices = async () => {
-    if (!confirm('確定要清除所有通知記錄？此操作無法還原。')) return;
+    if (!confirm(t('admin.overview.clear_confirm'))) return;
     await api.delete('/notices/clear');
     fetchOverview();
   };
@@ -774,12 +789,13 @@ export default function AdminPage() {
     <div className="admin-layout">
       <header className="admin-header">
         <div className="header-left">
-          <span className="header-title">⚙️ 通知中心管理</span>
+          <span className="header-title">{t('admin.header_title')}</span>
         </div>
         <div className="header-right">
+          <LanguageSwitcher />
           <span className="username-chip">{adminUsername}</span>
           <button className="btn-ghost small" onClick={handleLogout}>
-            登出
+            {t('admin.nav.logout')}
           </button>
         </div>
       </header>
@@ -800,21 +816,21 @@ export default function AdminPage() {
         {tab === 0 && (
           <div className="panel">
             <div className="panel-header">
-              <h2>📊 系統概覽</h2>
+              <h2>{t('admin.overview.title')}</h2>
               <button className="btn-small danger" onClick={handleClearNotices}>
-                清除通知記錄
+                {t('admin.overview.clear_btn')}
               </button>
             </div>
             <StatsPanel stats={stats} />
-            <h3 style={{ marginTop: '24px' }}>最近通知</h3>
+            <h3 style={{ marginTop: '24px' }}>{t('admin.overview.recent_title')}</h3>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>標題</th>
-                  <th>內容</th>
-                  <th>等級</th>
-                  <th>來源</th>
-                  <th>時間</th>
+                  <th>{t('admin.overview.table.title')}</th>
+                  <th>{t('admin.overview.table.content')}</th>
+                  <th>{t('admin.overview.table.level')}</th>
+                  <th>{t('admin.overview.table.source')}</th>
+                  <th>{t('admin.overview.table.time')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -825,7 +841,7 @@ export default function AdminPage() {
                     <td>
                       <span className={`severity-chip ${n.severity}`}>{n.severity}</span>
                     </td>
-                    <td>{n.flow_key ? <code>{n.flow_key}</code> : '手動'}</td>
+                    <td>{n.flow_key ? <code>{n.flow_key}</code> : t('admin.overview.source_manual')}</td>
                     <td>{new Date(n.created_at).toLocaleString('zh-TW')}</td>
                   </tr>
                 ))}
@@ -842,3 +858,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+export default AdminPage;

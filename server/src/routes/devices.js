@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/', (req, res) => {
   const { username, fcm_token, platform } = req.body;
   if (!username || !fcm_token)
-    return res.status(400).json({ error: 'username and fcm_token required' });
+    return res.status(400).json({ error: req.t('api.error.required_field', { field: 'username, fcm_token' }) });
 
   // Upsert by token
   db.prepare(`

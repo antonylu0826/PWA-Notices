@@ -17,7 +17,7 @@ router.get('/', requireAdmin, (req, res) => {
 
 router.post('/', requireAdmin, (req, res) => {
   const { name, permissions } = req.body;
-  if (!name) return res.status(400).json({ error: 'name required' });
+  if (!name) return res.status(400).json({ error: req.t('api.error.required_field', { field: 'name' }) });
 
   const rawKey = `sk_${uuidv4().replace(/-/g, '')}`;
   const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');

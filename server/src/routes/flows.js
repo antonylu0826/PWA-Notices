@@ -32,12 +32,12 @@ router.post('/', requireAdmin, (req, res) => {
   if (!flow_key || !name || !template_title || !template_message) {
     return res
       .status(400)
-      .json({ error: 'flow_key, name, template_title, template_message required' });
+      .json({ error: req.t('api.error.required_field', { field: 'flow_key, name, template_title, template_message' }) });
   }
 
   // Check unique key
   const existing = db.prepare('SELECT id FROM flows WHERE flow_key = ?').get(flow_key);
-  if (existing) return res.status(409).json({ error: 'flow_key already exists' });
+  if (existing) return res.status(409).json({ error: req.t('api.error.already_exists', { field: 'flow_key' }) });
 
   const result = db
     .prepare(
@@ -63,7 +63,7 @@ router.post('/', requireAdmin, (req, res) => {
 
 router.get('/:id', requireAdmin, (req, res) => {
   const flow = db.prepare('SELECT * FROM flows WHERE id = ?').get(req.params.id);
-  if (!flow) return res.status(404).json({ error: 'Flow not found' });
+  if (!flow) return res.status(404).json({ error: req.t('api.error.not_found') });
   res.json(flow);
 });
 
@@ -81,7 +81,7 @@ router.put('/:id', requireAdmin, (req, res) => {
   } = req.body;
 
   const flow = db.prepare('SELECT id FROM flows WHERE id = ?').get(req.params.id);
-  if (!flow) return res.status(404).json({ error: 'Flow not found' });
+  if (!flow) return res.status(404).json({ error: req.t('api.error.not_found') });
 
   db.prepare(
     `
@@ -121,7 +121,7 @@ router.delete('/:id', requireAdmin, (req, res) => {
 
 router.post('/:id/toggle', requireAdmin, (req, res) => {
   const flow = db.prepare('SELECT id, enabled FROM flows WHERE id = ?').get(req.params.id);
-  if (!flow) return res.status(404).json({ error: 'Flow not found' });
+  if (!flow) return res.status(404).json({ error: req.t('api.error.not_found') });
   db.prepare(
     'UPDATE flows SET enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
   ).run(flow.enabled ? 0 : 1, flow.id);
@@ -140,7 +140,7 @@ router.get('/:id/logs', requireAdmin, (req, res) => {
 // Test a flow (admin, no API key needed)
 router.post('/:id/test', requireAdmin, async (req, res) => {
   const flow = db.prepare('SELECT * FROM flows WHERE id = ?').get(req.params.id);
-  if (!flow) return res.status(404).json({ error: 'Flow not found' });
+  if (!flow) return res.status(404).json({ error: req.t('api.error.not_found') });
 
   // Bypass rate limit and enabled check for test
   const testFlow = { ...flow, enabled: 1, rate_limit_sec: 0 };
@@ -154,7 +154,7 @@ router.post('/trigger/:flowKey', requireApiKey, async (req, res) => {
   const flow = db
     .prepare('SELECT * FROM flows WHERE flow_key = ? AND enabled = 1')
     .get(req.params.flowKey);
-  if (!flow) return res.status(404).json({ error: 'Flow not found or disabled' });
+  if (!flow) return res.status(404).json({ error: req.t('api.error.not_found') });
 
   const result = await executeFlow(flow, req.body || {});
   if (result.skipped) return res.json({ status: 'skipped', reason: result.reason });
@@ -163,12 +163,12 @@ router.post('/trigger/:flowKey', requireApiKey, async (req, res) => {
 
 router.post('/webhook', requireApiKey, async (req, res) => {
   const { flow_key, ...payload } = req.body;
-  if (!flow_key) return res.status(400).json({ error: 'flow_key required in body' });
+  if (!flow_key) return res.status(400).json({ error: req.t('api.error.required_field', { field: 'flow_key' }) });
 
   const flow = db
     .prepare('SELECT * FROM flows WHERE flow_key = ? AND enabled = 1')
     .get(flow_key);
-  if (!flow) return res.status(404).json({ error: 'Flow not found or disabled' });
+  if (!flow) return res.status(404).json({ error: req.t('api.error.not_found') });
 
   const result = await executeFlow(flow, payload);
   if (result.skipped) return res.json({ status: 'skipped', reason: result.reason });

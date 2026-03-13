@@ -9,13 +9,13 @@ const router = express.Router();
 router.post('/login', (req, res) => {
   const { username, password } = req.body;
   if (!username || !password)
-    return res.status(400).json({ error: 'Username and password required' });
+    return res.status(400).json({ error: req.t('api.error.invalid_input') });
 
   const admin = db.prepare('SELECT * FROM admins WHERE username = ?').get(username);
-  if (!admin) return res.status(401).json({ error: 'Invalid credentials' });
+  if (!admin) return res.status(401).json({ error: req.t('api.error.invalid_credentials') });
 
   const valid = bcrypt.compareSync(password, admin.password_hash);
-  if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+  if (!valid) return res.status(401).json({ error: req.t('api.error.invalid_credentials') });
 
   const token = jwt.sign(
     { id: admin.id, username: admin.username },
@@ -37,15 +37,15 @@ router.post('/login', (req, res) => {
 router.post('/change-password', requireAdmin, (req, res) => {
   const { current_password, new_password } = req.body;
   if (!current_password || !new_password)
-    return res.status(400).json({ error: '請填寫目前密碼和新密碼' });
+    return res.status(400).json({ error: req.t('admin.settings.error_failed') });
   if (new_password.length < 6)
-    return res.status(400).json({ error: '新密碼至少需要 6 個字元' });
+    return res.status(400).json({ error: req.t('admin.settings.label_new') });
 
   const admin = db.prepare('SELECT * FROM admins WHERE id = ?').get(req.admin.id);
-  if (!admin) return res.status(404).json({ error: 'Admin not found' });
+  if (!admin) return res.status(404).json({ error: req.t('api.error.not_found') });
 
   const valid = bcrypt.compareSync(current_password, admin.password_hash);
-  if (!valid) return res.status(401).json({ error: '目前密碼不正確' });
+  if (!valid) return res.status(401).json({ error: req.t('admin.settings.label_current') + ' ' + req.t('notice.severity.critical') }); 
 
   const newHash = bcrypt.hashSync(new_password, 10);
   db.prepare('UPDATE admins SET password_hash = ? WHERE id = ?').run(newHash, admin.id);

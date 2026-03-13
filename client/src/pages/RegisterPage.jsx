@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { requestFCMToken } from '../services/firebase';
 import api from '../services/api';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function RegisterPage() {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [step, setStep] = useState('input'); // input | requesting | done | error
   const [error, setError] = useState('');
@@ -18,7 +21,7 @@ export default function RegisterPage() {
     try {
       const token = await requestFCMToken();
       if (!token) {
-        setError('請允許通知權限才能使用此服務。');
+        setError(t('register.permission_error'));
         setStep('error');
         return;
       }
@@ -35,7 +38,7 @@ export default function RegisterPage() {
       setStep('done');
       setTimeout(() => navigate('/'), 800);
     } catch (err) {
-      setError('註冊失敗，請稍後再試。');
+      setError(t('register.register_failed'));
       setStep('error');
     }
   };
@@ -44,16 +47,19 @@ export default function RegisterPage() {
     <div className="page-center">
       <div className="card">
         <div className="logo-icon">🔔</div>
-        <h1>Notices</h1>
-        <p className="subtitle">即時推播通知系統</p>
+        <div style={{ position: 'absolute', top: '16px', right: '16px' }}>
+          <LanguageSwitcher />
+        </div>
+        <h1>{t('register.title')}</h1>
+        <p className="subtitle">{t('register.subtitle')}</p>
 
         {step === 'input' || step === 'error' ? (
           <form onSubmit={handleSubmit} className="form-stack">
-            <p className="hint">輸入您的姓名以綁定此裝置</p>
+            <p className="hint">{t('register.hint')}</p>
             <input
               className="input"
               type="text"
-              placeholder="請輸入姓名..."
+              placeholder={t('register.placeholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -61,18 +67,18 @@ export default function RegisterPage() {
             />
             {error && <p className="error-text">{error}</p>}
             <button className="btn-primary" type="submit">
-              開始使用
+              {t('register.btn_submit')}
             </button>
           </form>
         ) : step === 'requesting' ? (
           <div className="status-msg">
             <div className="spinner"></div>
-            <p>正在申請通知權限...</p>
+            <p>{t('register.requesting_permission')}</p>
           </div>
         ) : (
           <div className="status-msg success">
             <div className="check-icon">✓</div>
-            <p>註冊成功！</p>
+            <p>{t('register.success')}</p>
           </div>
         )}
       </div>

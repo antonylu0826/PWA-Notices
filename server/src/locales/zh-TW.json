@@ -1,0 +1,191 @@
+{
+  "admin": {
+    "title": "管理後台",
+    "header_title": "⚙️ 通知中心管理",
+    "login": {
+      "title": "管理後台",
+      "subtitle": "通知中心管理",
+      "username_placeholder": "帳號",
+      "password_placeholder": "密碼",
+      "submit": "登入",
+      "submitting": "登入中...",
+      "error": "登入失敗"
+    },
+    "nav": {
+      "flows": "通知流程",
+      "devices": "已註冊裝置",
+      "apikeys": "API Keys",
+      "settings": "設定",
+      "logout": "登出"
+    },
+    "stats": {
+      "registered_devices": "已註冊裝置",
+      "total_notices": "通知總計",
+      "pending_acks": "未簽收通知"
+    },
+    "send": {
+      "title": "發送即時推播",
+      "label_title": "通知標題",
+      "label_message": "內容",
+      "label_severity": "緊急程度",
+      "label_target": "發送對象",
+      "placeholder_title": "標題",
+      "placeholder_message": "訊息內容...",
+      "severity_info": "一般",
+      "severity_warning": "警告",
+      "severity_critical": "緊急",
+      "target_all": "所有人",
+      "target_users": "指定用戶",
+      "no_users": "尚無已註冊用戶",
+      "sending": "發送中...",
+      "submit": "立即發送",
+      "select_user_error": "請至少選擇一位用戶",
+      "success_msg": "已發送給 {{count}} 個裝置",
+      "failed_msg": "發送失敗"
+    },
+    "flows": {
+      "title": "⚡ 通知流程",
+      "add": "+ 新增流程",
+      "edit": "編輯流程",
+      "label_key": "Flow Key (唯一識別碼)",
+      "label_name": "名稱",
+      "label_desc": "說明（可選）",
+      "label_title_tmpl": "通知標題模板",
+      "label_msg_tmpl": "通知內容模板",
+      "label_severity": "緊急程度",
+      "label_conditions": "觸發條件 (JSON Array)",
+      "label_recipients": "接收者",
+      "label_rate_limit": "頻率限制（秒，0=不限）",
+      "hint_vars": "（可用 {{變數}} 語法）",
+      "placeholder_key": "e.g. welding_alarm",
+      "placeholder_name": "流程名稱",
+      "placeholder_desc": "流程說明",
+      "placeholder_title_tmpl": "例：機台 {{machine_id}} 警報",
+      "placeholder_msg_tmpl": "例：錯誤代碼 {{error_code}}：{{message}}",
+      "empty": "尚未建立任何流程",
+      "status_on": "啟用",
+      "status_off": "停用",
+      "btn_test": "測試",
+      "btn_edit": "編輯",
+      "btn_delete": "刪除",
+      "confirm_delete": "確定刪除此流程？",
+      "test_success": "測試發送成功，推播至 {{count}} 個裝置",
+      "test_failed": "測試失敗",
+      "save_failed": "儲存失敗",
+      "stats_triggered": "觸發 {{count}} 次",
+      "stats_last": "最後：{{time}}"
+    },
+    "devices": {
+      "title": "📱 已註冊裝置",
+      "table": {
+        "user": "用戶",
+        "platform": "平台",
+        "last_active": "最後上線",
+        "status": "狀態",
+        "actions": "操作"
+      },
+      "status_active": "正常",
+      "status_inactive": "停用",
+      "confirm_delete": "確定刪除此裝置？"
+    },
+    "apikeys": {
+      "title": "🔑 API Keys",
+      "add": "+ 新增",
+      "copy_hint": "請複製此 API Key，離開後將無法再查看：",
+      "btn_copy": "複製",
+      "btn_close": "關閉",
+      "placeholder_name": "Key 名稱（例：工廠系統）",
+      "btn_create": "建立",
+      "table": {
+        "name": "名稱",
+        "prefix": "前綴",
+        "usage": "使用次數",
+        "last_used": "最後使用",
+        "status": "狀態",
+        "actions": "操作"
+      },
+      "status_active": "有效",
+      "status_revoked": "已撤銷",
+      "btn_revoke": "撤銷",
+      "confirm_delete": "確定刪除此 API Key？"
+    },
+    "settings": {
+      "title": "⚙️ 帳號設定",
+      "change_password": "變更密碼",
+      "label_current": "目前密碼",
+      "label_new": "新密碼（至少 6 個字元）",
+      "label_confirm": "確認新密碼",
+      "btn_submit": "確認變更",
+      "updating": "更新中...",
+      "success": "密碼已成功更新",
+      "error_mismatch": "新密碼與確認密碼不一致",
+      "error_failed": "更新失敗"
+    },
+    "overview": {
+      "title": "📊 系統概覽",
+      "clear_btn": "清除通知記錄",
+      "clear_confirm": "確定要清除所有通知記錄？此操作無法還原。",
+      "recent_title": "最近通知",
+      "table": {
+        "title": "標題",
+        "content": "內容",
+        "level": "等級",
+        "source": "來源",
+        "time": "時間"
+      },
+      "source_manual": "手動"
+    }
+  },
+  "notice": {
+    "title": "通知中心",
+    "empty": "目前沒有未讀通知",
+    "source_label": "來源：",
+    "btn_ack": "標示已讀",
+    "btn_ack_all": "全部標示已讀",
+    "unread_count": "未讀通知",
+    "nav_recent": "近期通知",
+    "nav_reset": "重設身分",
+    "username_default": "用戶",
+    "severity": {
+      "info": "一般",
+      "warning": "警告",
+      "critical": "緊急"
+    }
+  },
+  "register": {
+    "title": "Notices",
+    "subtitle": "即時推播通知系統",
+    "hint": "輸入您的姓名以綁定此裝置",
+    "placeholder": "請輸入姓名...",
+    "btn_submit": "開始使用",
+    "permission_error": "請允許通知權限才能使用此服務。",
+    "register_failed": "註冊失敗，請稍後再試。",
+    "requesting_permission": "正在申請通知權限...",
+    "success": "註冊成功！"
+  },
+  "common": {
+    "save": "儲存",
+    "cancel": "取消",
+    "delete": "刪除",
+    "loading": "載入中...",
+    "app_name": "Notices"
+  },
+  "api": {
+    "error": {
+      "unauthorized": "未授權的操作",
+      "forbidden": "權限不足",
+      "not_found": "找不到該資源",
+      "invalid_input": "無效的輸入資料",
+      "internal_server_error": "伺服器內部錯誤",
+      "invalid_credentials": "帳號或密碼錯誤",
+      "required_field": "必填欄位缺失：{{field}}",
+      "already_exists": "資源已存在：{{field}}",
+      "skipped": "已跳過執行：{{reason}}"
+    },
+    "success": {
+      "updated": "更新成功",
+      "deleted": "刪除成功",
+      "sent": "發送成功"
+    }
+  }
+}

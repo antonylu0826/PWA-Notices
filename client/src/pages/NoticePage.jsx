@@ -2,16 +2,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { onForegroundMessage } from '../services/firebase';
 import api from '../services/api';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const SEVERITY_CONFIG = {
-  critical: { icon: '🔴', label: '緊急', class: 'critical' },
-  warning: { icon: '🟡', label: '警告', class: 'warning' },
-  info: { icon: '🔵', label: '一般', class: 'info' },
+  critical: { icon: '🔴', key: 'notice.severity.critical', class: 'critical' },
+  warning: { icon: '🟡', key: 'notice.severity.warning', class: 'warning' },
+  info: { icon: '🔵', key: 'notice.severity.info', class: 'info' },
 };
 
 function NoticeCard({ notice, onAck }) {
+  const { t, i18n } = useTranslation();
   const cfg = SEVERITY_CONFIG[notice.severity] || SEVERITY_CONFIG.info;
-  const dt = new Date(notice.created_at).toLocaleString('zh-TW', {
+  const dt = new Date(notice.created_at).toLocaleString(i18n.language, {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -22,26 +25,27 @@ function NoticeCard({ notice, onAck }) {
     <div className={`notice-card ${cfg.class}`}>
       <div className="notice-card-header">
         <span className="severity-tag">
-          {cfg.icon} {cfg.label}
+          {cfg.icon} {t(cfg.key)}
         </span>
         <span className="notice-time">{dt}</span>
       </div>
       <h3 className="notice-title">{notice.title}</h3>
       <p className="notice-message">{notice.message}</p>
-      {notice.flow_key && <div className="notice-source">來源：{notice.flow_key}</div>}
+      {notice.flow_key && <div className="notice-source">{t('notice.source_label')}{notice.flow_key}</div>}
       <button className="btn-ack" onClick={() => onAck(notice.id)}>
-        標示已讀
+        {t('notice.btn_ack')}
       </button>
     </div>
   );
 }
 
 export default function NoticePage() {
+  const { t } = useTranslation();
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const username = localStorage.getItem('username') || '用戶';
+  const username = localStorage.getItem('username') || t('notice.username_default');
   const deviceId = localStorage.getItem('device_id');
 
   const fetchNotices = useCallback(async () => {
@@ -100,9 +104,10 @@ export default function NoticePage() {
       <header className="app-header">
         <div className="header-left">
           <div className="pulse-dot"></div>
-          <span className="header-title">通知中心</span>
+          <span className="header-title">{t('notice.title')}</span>
         </div>
         <div className="header-right">
+          <LanguageSwitcher />
           <span className="username-chip">{username}</span>
         </div>
       </header>
@@ -111,13 +116,13 @@ export default function NoticePage() {
         <div className="summary-bar">
           <div className="summary-item">
             <span className="summary-value">{notices.length}</span>
-            <span className="summary-label">未讀通知</span>
+            <span className="summary-label">{t('notice.unread_count')}</span>
           </div>
           {notices.length > 0 && (
             <>
               <div className="summary-divider"></div>
               <button className="btn-ack-all" onClick={handleAckAll}>
-                全部標示已讀
+                {t('notice.btn_ack_all')}
               </button>
             </>
           )}
@@ -128,7 +133,7 @@ export default function NoticePage() {
             <div className="spinner"></div>
           </div>
         ) : notices.length === 0 ? (
-          <div className="center-msg empty-msg">目前沒有未讀通知</div>
+          <div className="center-msg empty-msg">{t('notice.empty')}</div>
         ) : (
           <div className="notice-list">
             {notices.map((n) => (
@@ -139,9 +144,9 @@ export default function NoticePage() {
       </main>
 
       <footer className="bottom-nav">
-        <div className="nav-item active">近期通知</div>
+        <div className="nav-item active">{t('notice.nav_recent')}</div>
         <div className="nav-item" onClick={handleReset}>
-          重設身分
+          {t('notice.nav_reset')}
         </div>
       </footer>
     </div>
